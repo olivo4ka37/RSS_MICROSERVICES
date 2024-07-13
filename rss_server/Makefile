@@ -45,3 +45,13 @@ mig_up:
 ## mig_down: downing database
 mig_down:
 	goose -dir ./../migrations postgres "user=postgres password=password dbname=rss host=localhost port=5040 sslmode=disable" down
+
+
+## modules_up
+modules_up:
+		@echo "Switching to news-service directory..."
+		cd ..\news-service && go mod download
+		@echo "Dependencies for news-service downloaded."
+		@echo "Switching to api-service directory..."
+		cd ..\api-service && go mod download
+		@echo "Dependencies for api-service downloaded."
