@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: 'postgres:16.0'
+    ports:
+      - "5040:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rss
+
+  news-service:
+    build:
+      context: ../news-service
+      dockerfile: ../news-service/news-service.dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=postgres port=5432 user=postgres password=password dbname=rss sslmode=disable timezone=UTC connect_timeout=5"
+
+  api-service:
+    build:
+      context: ../api-service
+      dockerfile: ../api-service/api-service.dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=postgres port=5432 user=postgres password=password dbname=rss sslmode=disable timezone=UTC connect_timeout=5"
+      srcURL: "http://news-service:8080/sources"
+      srcURLid: "http://news-service:8080/sources/"
