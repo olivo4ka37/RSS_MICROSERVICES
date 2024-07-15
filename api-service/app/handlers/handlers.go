@@ -62,7 +62,7 @@ func GetAllSources(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(resp.StatusCode)
+	//w.WriteHeader(resp.StatusCode)
 }
 
 // GetUserNews fetches all news from subscribed sources of a user
@@ -77,7 +77,7 @@ func GetUserNews(w http.ResponseWriter, r *http.Request) {
 
 	err := db.Conn.QueryRow(context.Background(), "SELECT id FROM users WHERE uuid=$1", userUUID).Scan(&id)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Query failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Cannot find user with this uuid (Query failed): %v\n", err)
 		os.Exit(1)
 	}
 
@@ -100,12 +100,35 @@ func GetUserNews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	localURL := fmt.Sprintf("http://localhost:8080/sources/")
-	url := cmp.Or(os.Getenv("srcURLid"), localURL)
-	url = url + strconv.Itoa(id)
+	// Get pagination parameters
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+
+	// Set default values if parameters are not provided
+	page := 1
+	limit := 2
+
+	if pageStr != "" {
+		page, err = strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			http.Error(w, "Invalid page parameter", http.StatusBadRequest)
+			return
+		}
+	}
+
+	if limitStr != "" {
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil || limit < 1 {
+			http.Error(w, "Invalid limit parameter", http.StatusBadRequest)
+			return
+		}
+	}
+
+	url := fmt.Sprintf("http://news-service:8080/sources/%d/news?page=%d&limit=%d", id, page, limit)
+	log.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {
-		http.Error(w, "Failed to get all subscribed sources:", http.StatusInternalServerError)
+		http.Error(w, "Failed to get all subscribed sources: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
@@ -121,7 +144,7 @@ func GetUserNews(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(resp.StatusCode)
+	//w.WriteHeader(resp.StatusCode)
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {

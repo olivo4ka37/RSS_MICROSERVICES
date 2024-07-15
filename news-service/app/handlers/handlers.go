@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"news_service/app/db"
 	"strconv"
-	"time"
 )
 
 func GetSourcesHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,57 +50,100 @@ func GetUserNews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var lastLogin time.Time
-	db.Conn.QueryRow(context.Background(), "SELECT last_login FROM users WHERE users.id=$1", userID).Scan(&lastLogin)
-	log.Println("Time of lastLog is:", lastLogin)
-
-	rows, err := db.Conn.Query(context.Background(), "SELECT s.id, s.url FROM user_subscriptions us JOIN Sources s ON us.source_id = s.id WHERE us.user_id=$1", userID)
+	// Get pagination parameters
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
+		http.Error(w, "Error while getting number of page", http.StatusBadRequest)
+	}
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		http.Error(w, "Error while getting number of limit", http.StatusBadRequest)
+	}
+	log.Println("page is:", page)
+	log.Println("limit is:", limit)
+
+	// Calculate offset
+	offset := (page - 1) * limit
+
+	// Get articles for the sources after last login time with pagination
+	query := `SELECT a.id, a.title, a.link, a.description, a.published, a.source_id
+FROM articles a
+JOIN user_subscriptions us ON a.source_id = us.source_id
+JOIN users u ON us.user_id = u.id
+WHERE us.user_id = $1
+  AND a.published > u.last_login
+ORDER BY a.published DESC
+LIMIT $2 OFFSET $3;`
+	articleRows, err := db.Conn.Query(context.Background(), query, userID, limit, offset)
+	if err != nil {
+		log.Println("Error while trying to get articleRows")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	var sources []db.Source
-	for rows.Next() {
-		var source db.Source
-		if err := rows.Scan(&source.ID, &source.URL); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		sources = append(sources, source)
-	}
+	log.Println("Article rows is: ", articleRows)
+	defer articleRows.Close()
 
 	articles := make([]db.Article, 0, 1000)
-
-	for _, source := range sources {
-		articleRows, err := db.Conn.Query(context.Background(), "SELECT id, title, link, description, published, source_id FROM articles WHERE source_id=$1", source.ID)
-		if err != nil {
+	for articleRows.Next() {
+		var article db.Article
+		if err := articleRows.Scan(&article.ID, &article.Title, &article.Link, &article.Description, &article.Published, &article.SourceID); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer articleRows.Close()
-
-		for articleRows.Next() {
-			var article db.Article
-			if err := articleRows.Scan(&article.ID, &article.Title, &article.Link, &article.Description, &article.Published, &article.SourceID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			articles = append(articles, article)
-		}
-
-		if err := articleRows.Err(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		articles = append(articles, article)
 	}
+	log.Println("articles is:", articles)
 
 	// Return articles as JSON
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(articles); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
+	/*
+		var sources []db.Source
+		for rows.Next() {
+			var source db.Source
+			if err := rows.Scan(&source.ID, &source.URL); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			sources = append(sources, source)
+		}
+
+		articles := make([]db.Article, 0, 1000)
+
+		for _, source := range sources {
+			articleRows, err := db.Conn.Query(context.Background(), "SELECT id, title, link, description, published, source_id FROM articles WHERE source_id=$1", source.ID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer articleRows.Close()
+
+			for articleRows.Next() {
+				var article db.Article
+				if err := articleRows.Scan(&article.ID, &article.Title, &article.Link, &article.Description, &article.Published, &article.SourceID); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				articles = append(articles, article)
+			}
+
+			if err := articleRows.Err(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Return articles as JSON
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(articles); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+	*/
 
 	/*
 		var sources []db.Source

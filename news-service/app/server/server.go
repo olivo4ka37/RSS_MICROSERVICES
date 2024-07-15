@@ -21,7 +21,7 @@ func InitRoutes() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/sources", handlers.GetSourcesHandler).Methods("GET")
 	router.HandleFunc("/sources", handlers.AddSourceHandler).Methods("POST")
-	router.HandleFunc("/sources/{id}", handlers.GetUserNews).Methods("GET")
+	router.HandleFunc("/sources/{id}/news", handlers.GetUserNews).Methods("GET")
 
 	return router
 }

@@ -48,7 +48,9 @@ func (rc *RssCache) update() {
 	rc.Mut.Unlock()
 
 	log.Println("Cache updated")
-	for _, src := range rc.Sources {
-		log.Println(src.ID, src.URL)
-	}
+	/*
+		for _, src := range rc.Sources {
+			log.Println(src.ID, src.URL)
+		}
+	*/
 }

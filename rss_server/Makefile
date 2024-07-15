@@ -21,8 +21,8 @@ up_build: build_news build_api
 	@echo "Building (when required) and starting docker images..."
 	docker-compose up --build -d
 	@echo "Docker images built and started!"
-	@echo "Waiting for 7 seconds..."
-	timeout /T 7 /NOBREAK
+	@echo "Waiting for 4 seconds..."
+	timeout /T 4 /NOBREAK
 	make mig_up
 
 ## build_news: builds the news-service binary as a linux executable
