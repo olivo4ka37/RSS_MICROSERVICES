@@ -48,61 +48,15 @@ func connToDB() (*pgx.Conn, error) {
 		time.Sleep(time.Second * 2)
 		continue
 	}
-
-	/*
-		conn, err := pgx.Connect(context.Background(), config.ConnStr)
-		if err != nil {
-			log.Fatalf("Unable to connect to database: %v\n", err)
-			return nil, err
-		}
-
-		if err = loadStartingSources(conn); err != nil{
-			log.Fatalf("Error while trying to load start RSS sources: %v\n", err)
-			return nil, err
-		}
-
-		log.Println("Connected to DB and loaded starting sources!")
-
-	*/
-
-	//return conn, nil
 }
 
 func ConnAndLoad() (*pgx.Conn, error) {
 	conn, err := connToDB()
-
-	if err = loadStartingSources(conn); err != nil {
-		log.Fatalf("Error while trying to load start RSS sources: %v\n", err)
-		return nil, err
+	if err != nil {
+		log.Fatalf("Can't connect to DB: %e", err)
 	}
 
 	log.Println("Connected to DB and loaded starting sources!")
 
 	return conn, nil
-}
-
-func loadStartingSources(conn *pgx.Conn) error {
-	for _, src := range startSources {
-		err := conn.QueryRow(context.Background(), `
-            INSERT INTO sources (url) 
-            VALUES ($1) 
-            ON CONFLICT (url) DO NOTHING 
-            RETURNING id`, src.URL).Scan(&src.ID)
-
-		if err != nil {
-			if err == pgx.ErrNoRows {
-				// Получаем id источника из базы данных, если он уже существует
-				err = conn.QueryRow(context.Background(), "SELECT id FROM sources WHERE url=$1", src.URL).Scan(&src.ID)
-				if err != nil {
-					return err
-				}
-			} else {
-				return err
-			}
-		}
-
-		//fetchAndStoreRSS(src)
-	}
-
-	return nil
 }

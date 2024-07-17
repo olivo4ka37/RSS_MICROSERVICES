@@ -29,18 +29,3 @@ type Article struct {
 	Published   time.Time `json:"published"`
 	SourceID    int       `json:"source_id"`
 }
-
-var startSources []Source = []Source{
-	/*
-		{URL: "https://habr.com/ru/rss/hub/go/all/?fl=ru"},
-		{URL: "https://habr.com/ru/rss/best/daily/?fl=ru"},
-		{URL: "https://golangcode.com/index.xml"},
-		{URL: "https://forum.golangbridge.org/latest.rss"},
-		{URL: "https://appliedgo.net/index.xml"},
-		{URL: "https://blog.jetbrains.com/go/feed/"},
-		{URL: "https://dave.cheney.net/category/golang/feed"},
-		{URL: "https://changelog.com/gotime/feed"},
-		{URL: "https://golang.ch/feed/"},
-		{URL: "https://gosamples.dev/index.xml"},
-	*/
-}

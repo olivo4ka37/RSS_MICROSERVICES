@@ -40,16 +40,6 @@ func getItemsFromRSS(src db.Source) {
 			break
 		}
 
-		/*
-			rows, err := db.Conn.Query(context.Background(), "INSERT INTO articles (title, link, description, published, source_id) VALUES ($1, $2, $3, $4, $5)",
-				item.Title, item.Link, item.Description, item.PublishedParsed, src.ID)
-			if err != nil {
-				log.Printf("Error inserting article: %v", err)
-				return
-			}
-			rows.Close()
-		*/
-
 		_, err := db.Conn.Exec(context.Background(), `
         INSERT INTO articles (title, link, description, published, source_id) 
         VALUES ($1, $2, $3, $4, $5)

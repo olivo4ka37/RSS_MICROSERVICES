@@ -50,21 +50,4 @@ func ConnToDB() (*pgx.Conn, error) {
 		continue
 	}
 
-	/*
-		conn, err := pgx.Connect(context.Background(), config.ConnStr)
-		if err != nil {
-			log.Fatalf("Unable to connect to database: %v\n", err)
-			return nil, err
-		}
-
-		if err = loadStartingSources(conn); err != nil{
-			log.Fatalf("Error while trying to load start RSS sources: %v\n", err)
-			return nil, err
-		}
-
-		log.Println("Connected to DB and loaded starting sources!")
-
-	*/
-
-	//return conn, nil
 }

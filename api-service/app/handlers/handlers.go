@@ -143,8 +143,6 @@ func GetUserNews(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(apiResp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	//w.WriteHeader(resp.StatusCode)
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
